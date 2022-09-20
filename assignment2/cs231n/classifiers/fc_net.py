@@ -74,7 +74,11 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        dims = [input_dim] + hidden_dims + [num_classes]
+        for i in range(1, len(dims)):
+            self.params['W%d'%i] = np.random.randn(dims[i-1], dims[i]) * weight_scale
+            self.params['b%d'%i] = np.zeros(dims[i])
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -148,7 +152,22 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        outs = {}
+        caches = {}
+
+        out = X
+
+        for i in range(1, self.num_layers + 1):
+            W, b = self.params["W%d"%i], self.params["b%d"%i]
+            out, cache = affine_forward(out, W, b)
+            outs['L%d'%i] = out
+            caches['L%d'%i] = cache
+            if i != self.num_layers:
+                out, cache = relu_forward(out)
+                outs['R%d'%i] = out
+                caches['R%d'%i] = cache
+
+        scores = out
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -175,7 +194,15 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        loss, dout = softmax_loss(scores, y)
+        for i in range(self.num_layers, 0, -1):
+            if i != self.num_layers:
+                dout = relu_backward(dout, caches['R%d'%i])
+            W = self.params['W%d'%i]
+            loss += 0.5 * self.reg * np.sum(W**2)
+            dout, dW, db = affine_backward(dout, caches['L%d'%i])
+            grads['W%d'%i] = dW + self.reg * W
+            grads['b%d'%i] = db
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
